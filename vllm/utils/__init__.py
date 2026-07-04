@@ -2,10 +2,22 @@
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
 import uuid
+from typing import TYPE_CHECKING
 
 import torch
 
 MASK_64_BITS = (1 << 64) - 1
+
+if TYPE_CHECKING:
+    from vllm.utils.weight_checker import WeightChecker
+
+
+def __getattr__(name: str):
+    if name == "WeightChecker":
+        from vllm.utils.weight_checker import WeightChecker
+
+        return WeightChecker
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def random_uuid() -> str:
