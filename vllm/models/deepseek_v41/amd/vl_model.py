@@ -131,6 +131,11 @@ class DeepseekV41ForCausalLM(
     delegates through ``language_model`` via the protocol defaults.
     ``SupportsEncoderCudaGraph`` (ViT CUDA graph capture/replay) is
     implemented by ``DeepseekV4VLEncoderCudaGraphMixin``.
+
+    Unlike the NVIDIA wrapper this one does not implement ``SupportsLoRA``
+    yet: the ROCm attention layer hands ``fused_wqa_wkv`` and ``wo_b`` to
+    fused ops that read the raw weights, so adapter deltas would be dropped
+    silently. Port those call sites before adding the interface here.
     """
 
     supports_encoder_tp_data = True

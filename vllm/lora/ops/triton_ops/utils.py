@@ -62,13 +62,18 @@ def _get_lora_a_ptr(lora_a_weights: list[torch.Tensor], device: torch.device):
     ):
         raise ValueError("All LoRA weights must have the same stride.")
 
-    _LORA_A_PTR_DICT[key] = (
+    values = (
         lora_ptr_tensor,
         lora_strides_d0[0],
         lora_strides_d1[0],
         lora_strides_d2[0],
     )
-    return _LORA_A_PTR_DICT.get(key)
+    if len(lora_a_weights) > 1:
+        # With one weight ``lora_ptr_tensor`` is the tensor itself; caching the
+        # tuple would keep temporary single-slice adapter weights alive for the
+        # lifetime of the process.
+        _LORA_A_PTR_DICT[key] = values
+    return values
 
 
 def _get_lora_b_ptr(
@@ -145,7 +150,7 @@ def _get_lora_b_ptr(
         same_stride = False
     # MAX_N is the maximum hidden size among all the lora_b weights
     MAX_N = max(hidden_sizes)
-    _LORA_B_PTR_DICT[key] = (
+    values = (
         slice_start_tensor,
         lora_ptr_tensor,
         lora_strides_d0_tensor,
@@ -155,7 +160,10 @@ def _get_lora_b_ptr(
         same_stride,
         MAX_N,
     )
-    return _LORA_B_PTR_DICT.get(key)
+    if len(lora_weights) > 1:
+        # See ``_get_lora_a_ptr``: never cache a single sliced adapter tensor.
+        _LORA_B_PTR_DICT[key] = values
+    return values
 
 
 @functools.lru_cache

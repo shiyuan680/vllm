@@ -243,6 +243,10 @@ class DeepseekV4FlashInferMLAAttention(DeepseekV4Attention):
         # exception is a draft block running past max_model_len, whose clamped
         # positions it does not reproduce; that only costs those drafts.
         reason = rope_quant_unsupported_reason(self)
+        if reason is None and vllm_config.lora_config is not None:
+            # RopeQuant hands the grouped output projection a kernel-quantized
+            # activation, so the adapter's A matmul has no bf16 input left.
+            reason = "LoRA adapters need the bf16 attention output"
         self._fuse_rope_quant = reason is None
         if reason is None:
             logger.info_once(
